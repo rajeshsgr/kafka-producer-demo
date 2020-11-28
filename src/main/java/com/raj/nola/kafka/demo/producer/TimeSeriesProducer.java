@@ -3,6 +3,7 @@ import com.raj.nola.kafka.demo.config.SystemConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 
@@ -22,6 +23,7 @@ public class TimeSeriesProducer {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SystemConfig.bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class.getName());
+        props.put(ProducerConfig.ACKS_CONFIG,"0");
 
         KafkaProducer<Long, Integer> producer = new KafkaProducer<Long, Integer>(props);
 
@@ -34,9 +36,15 @@ public class TimeSeriesProducer {
             int randomNumber = random.nextInt(100);
 
             try {
-                producer.send(new ProducerRecord<Long, Integer>(SystemConfig.topicName,
-                       System.nanoTime(),
-                        randomNumber));
+
+                ProducerRecord<Long, Integer> record= new ProducerRecord<Long, Integer>(SystemConfig.topicName, System.nanoTime(),randomNumber);
+
+                RecordMetadata recordMetadata = producer.send(record).get();
+
+                String message = String.format("sent message to topic:%s partition:%s  offset:%s",
+                        recordMetadata.topic(), recordMetadata.partition(), recordMetadata.offset());
+                System.out.println(message);
+
             }catch(Exception e){
                 e.printStackTrace();
             }
